@@ -1,0 +1,11 @@
+# 本地秘密文件：以后存数据库等配置，绝不上传
+.env
+
+# 依赖目录（Day 7 之后可能会用到）
+node_modules/
+
+# 系统与编辑器杂项
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
