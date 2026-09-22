@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>中英翻译 · 效率小工具箱</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      resize: vertical;
+    }
+    textarea:focus { outline: 2px solid #667eea; border-color: transparent; }
+    .direction { font-size: .85rem; color: #667eea; font-weight: 700; margin-top: 10px; }
+    .miss { color: #b45309; font-size: .82rem; margin-top: 10px; }
+    .dict-info { font-size: .78rem; color: #94a3b8; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <a class="back" href="index.html">← 返回工具箱</a>
+    <h1>🌐 中英翻译</h1>
+    <p class="sub">离线词典翻译 · 输入中文或英文，自动识别方向</p>
+
+    <label for="input">输入要翻译的内容</label>
+    <textarea id="input" placeholder="例如：今天天气很好 / today is a good day" autofocus></textarea>
+
+    <div class="direction" id="direction"></div>
+    <div class="result" id="result">翻译结果会显示在这里</div>
+    <div class="miss" id="miss"></div>
+
+    <div class="dict-info" id="dictInfo"></div>
+  </main>
+
+  <script src="js/dict.js"></script>
+  <script>
+    const inputEl = document.getElementById('input');
+    const resultEl = document.getElementById('result');
+    const dirEl = document.getElementById('direction');
+    const missEl = document.getElementById('miss');
+    document.getElementById('dictInfo').textContent =
+      '词典规模：' + DICT.length + ' 组词条 · 全程本地查询，不联网';
+
+    const hasChinese = (s) => /[\u4e00-\u9fff]/.test(s);
+
+    /* 中文 → 英文：贪心最长匹配（优先匹配最长的词条） */
+    function zhToEn(text) {
+      const keys = [...ZH2EN.keys()].sort((a, b) => b.length - a.length);
+      const out = [], missed = [];
+      let i = 0;
+      while (i < text.length) {
+        const ch = text[i];
+        if (!hasChinese(ch)) {           // 连续非中文片段整段保留（英文/数字/标点）
+          let j = i;
+          while (j < text.length && !hasChinese(text[j])) j++;
+          const seg = text.slice(i, j).trim();
+          if (seg) out.push(seg);
+          i = j; continue;
+        }
+        let hit = null;
+        for (const k of keys) {
+          if (text.startsWith(k, i)) { hit = k; break; }
+        }
+        if (hit) {
+          out.push(ZH2EN.get(hit)); i += hit.length;
+        } else {                          // 单字兜底，再不行记为未收录
+          if (ZH2EN.has(ch)) { out.push(ZH2EN.get(ch)); }
+          else { out.push(ch); if (!missed.includes(ch)) missed.push(ch); }
+          i++;
+        }
+      }
+      // 拼接后清理标点前的多余空格
+      const joined = out.join(' ').replace(/\s+([,.!?;:，。！？；：])/g, '$1');
+      return { text: joined, missed };
+    }
+
+    /* 英文 → 中文：按空格与标点切词，逐词查（大小写不敏感） */
+    function enToZh(text) {
+      const parts = text.split(/(\s+|[,.!?;:'"()\[\]])/).filter(Boolean);
+      const out = [], missed = [];
+      for (const p of parts) {
+        if (/^[\s,.!?;:'"()\[\]]+$/.test(p)) { out.push(p); continue; }
+        const zh = EN2ZH.get(p.toLowerCase());
+        if (zh) out.push(zh);
+        else { out.push(p); if (!missed.includes(p)) missed.push(p); }
+      }
+      return { text: out.join(''), missed };
+    }
+
+    function translate() {
+      const text = inputEl.value.trim();
+      if (!text) {
+        dirEl.textContent = '';
+        resultEl.textContent = '翻译结果会显示在这里';
+        missEl.textContent = '';
+        return;
+      }
+      const r = hasChinese(text) ? zhToEn(text) : enToZh(text);
+      dirEl.textContent = hasChinese(text) ? '🇨🇳 中文 → 🇬🇧 英文' : '🇬🇧 英文 → 🇨🇳 中文';
+      resultEl.textContent = r.text;
+      missEl.textContent = r.missed.length
+        ? '⚠️ 未收录：' + r.missed.join('、') + '（已原样保留）'
+        : '';
+    }
+
+    inputEl.addEventListener('input', translate);
+  </script>
+</body>
+</html>
