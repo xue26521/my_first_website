@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>单位换算器 · 效率小工具箱</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="card">
+    <a class="back" href="index.html">← 返回首页</a>
+    <h1>📐 单位换算器</h1>
+    <p class="sub">长度 / 重量 / 温度互转，输入即刻出结果</p>
+
+    <label for="category">换算类型</label>
+    <select id="category">
+      <option value="length">长度</option>
+      <option value="weight">重量</option>
+      <option value="temp">温度</option>
+    </select>
+
+    <label for="value">数值</label>
+    <input type="text" id="value" placeholder="例如：3.5" />
+
+    <div class="row">
+      <div>
+        <label for="fromUnit">从</label>
+        <select id="fromUnit"></select>
+      </div>
+      <div>
+        <label for="toUnit">到</label>
+        <select id="toUnit"></select>
+      </div>
+    </div>
+
+    <div class="error" id="error"></div>
+    <div class="result" id="result">输入数值后自动显示结果</div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // 长度/重量：换算成基准单位（米/克）的倍率
+    const UNITS = {
+      length: {
+        "米": 1, "千米": 1000, "厘米": 0.01,
+        "英寸": 0.0254, "英尺": 0.3048, "英里": 1609.344
+      },
+      weight: {
+        "克": 1, "千克": 1000, "磅": 453.59237, "盎司": 28.349523125
+      },
+      temp: ["摄氏", "华氏", "开尔文"]
+    };
+
+    // 温度：全部先转摄氏，再从摄氏转目标
+    const toC = {
+      "摄氏": v => v,
+      "华氏": v => (v - 32) * 5 / 9,
+      "开尔文": v => v - 273.15
+    };
+    const fromC = {
+      "摄氏": v => v,
+      "华氏": v => v * 9 / 5 + 32,
+      "开尔文": v => v + 273.15
+    };
+
+    function fillUnits(category) {
+      const names = category === "temp" ? UNITS.temp : Object.keys(UNITS[category]);
+      $("fromUnit").innerHTML = names.map(n => `<option>${n}</option>`).join("");
+      $("toUnit").innerHTML = names.map(n => `<option>${n}</option>`).join("");
+      $("toUnit").selectedIndex = names.length > 1 ? 1 : 0;
+    }
+
+    function formatNumber(n) {
+      // 保留最多 4 位小数并去除末尾无意义的 0（AC11）
+      const rounded = Math.round(n * 10000) / 10000;
+      return String(rounded);
+    }
+
+    function convert() {
+      const raw = $("value").value.trim();
+      $("error").textContent = "";
+      if (raw === "") {
+        $("result").textContent = "输入数值后自动显示结果";
+        return;
+      }
+      const v = Number(raw);
+      if (!isFinite(v)) {
+        $("error").textContent = "请输入有效的数字";   // AC13
+        $("result").textContent = "";
+        return;
+      }
+      const category = $("category").value;
+      const from = $("fromUnit").value;
+      const to = $("toUnit").value;
+      if ((category === "length" || category === "weight") && v < 0) {
+        $("error").textContent = "长度和重量不支持负数";  // AC13
+        $("result").textContent = "";
+        return;
+      }
+      let out;
+      if (category === "temp") {
+        out = fromC[to](toC[from](v));
+      } else {
+        const base = v * UNITS[category][from];
+        out = base / UNITS[category][to];
+      }
+      $("result").textContent = `${formatNumber(v)} ${from} = ${formatNumber(out)} ${to}`;
+    }
+
+    $("category").addEventListener("change", () => {
+      fillUnits($("category").value);
+      $("result").textContent = "输入数值后自动显示结果";  // AC12：不残留旧结果
+      $("error").textContent = "";
+      convert();
+    });
+    [$("value"), $("fromUnit"), $("toUnit")].forEach(el =>
+      el.addEventListener("input", convert));
+
+    fillUnits("length");
+  </script>
+</body>
+</html>

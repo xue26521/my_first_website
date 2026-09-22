@@ -1,0 +1,89 @@
+/* 效率小工具箱 · 共享样式 */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #1e293b;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.card {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+  align-self: center;
+}
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+.sub { color: #64748b; font-size: .9rem; margin-bottom: 20px; }
+.back { display: inline-block; margin-bottom: 14px; color: #667eea; text-decoration: none; font-size: .9rem; }
+.back:hover { text-decoration: underline; }
+
+/* 表单控件 */
+label { display: block; font-size: .9rem; color: #475569; margin: 14px 0 6px; }
+input[type="text"], input[type="number"], select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+}
+input:focus, select:focus { outline: 2px solid #667eea; border-color: transparent; }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; }
+.btn {
+  padding: 10px 18px;
+  font-size: .95rem;
+  border: none;
+  border-radius: 8px;
+  background: #667eea;
+  color: #fff;
+  cursor: pointer;
+}
+.btn:hover { background: #5a6fd6; }
+.btn.ghost { background: #e2e8f0; color: #334155; }
+.btn.ghost:hover { background: #cbd5e1; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+/* 结果与提示 */
+.result {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  word-break: break-all;
+  min-height: 1.4em;
+}
+.error { color: #dc2626; font-size: .85rem; margin-top: 8px; min-height: 1em; }
+.ok { color: #16a34a; font-size: .85rem; margin-top: 8px; min-height: 1em; }
+
+/* 首页导航 */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #1e293b;
+  margin-bottom: 12px;
+  transition: border-color .15s;
+}
+.nav-item:hover { border-color: #667eea; }
+.nav-item .icon { font-size: 1.8rem; }
+.nav-item .name { font-weight: 700; }
+.nav-item .desc { font-size: .82rem; color: #64748b; }
+
+/* 手机宽度适配（约 375px） */
+@media (max-width: 480px) {
+  .card { padding: 20px 16px; }
+  h1 { font-size: 1.3rem; }
+}

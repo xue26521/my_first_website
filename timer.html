@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>倒计时器 · 效率小工具箱</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .display {
+      font-size: 3.2rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 18px 0;
+      font-variant-numeric: tabular-nums;
+      color: #1e293b;
+    }
+    .display.done {
+      color: #dc2626;
+      animation: flash .6s ease-in-out infinite alternate;
+    }
+    @keyframes flash { from { opacity: 1; } to { opacity: .25; } }
+    .presets { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .presets .btn { padding: 6px 14px; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <a class="back" href="index.html">← 返回首页</a>
+    <h1>⏱️ 倒计时器</h1>
+    <p class="sub">输入时长或点预设，时间到会闪烁并发出提示音</p>
+
+    <div class="row">
+      <div>
+        <label for="h">时</label>
+        <input type="number" id="h" min="0" max="99" value="0" />
+      </div>
+      <div>
+        <label for="m">分</label>
+        <input type="number" id="m" min="0" max="59" value="25" />
+      </div>
+      <div>
+        <label for="s">秒</label>
+        <input type="number" id="s" min="0" max="59" value="0" />
+      </div>
+    </div>
+
+    <div class="presets">
+      <button class="btn ghost" data-min="1">1 分钟</button>
+      <button class="btn ghost" data-min="5">5 分钟</button>
+      <button class="btn ghost" data-min="25">25 分钟</button>
+      <button class="btn ghost" data-min="60">60 分钟</button>
+    </div>
+
+    <div class="display" id="display">00:25:00</div>
+    <div class="error" id="error"></div>
+
+    <div class="btn-row">
+      <button class="btn" id="startBtn">开始</button>
+      <button class="btn ghost" id="pauseBtn" disabled>暂停</button>
+      <button class="btn ghost" id="resetBtn" disabled>重置</button>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const hInput = $("h"), mInput = $("m"), sInput = $("s");
+    const display = $("display"), error = $("error");
+    const startBtn = $("startBtn"), pauseBtn = $("pauseBtn"), resetBtn = $("resetBtn");
+
+    let endAt = null;        // 目标结束时刻（时间戳）—— AC8 的关键
+    let remainMs = 0;        // 暂停时保存的剩余毫秒
+    let tickTimer = null;
+    let running = false;
+
+    function readInputs() {
+      const h = parseInt(hInput.value) || 0;
+      const m = parseInt(mInput.value) || 0;
+      const s = parseInt(sInput.value) || 0;
+      if (h < 0 || m < 0 || s < 0) return -1;
+      return (h * 3600 + m * 60 + s) * 1000;
+    }
+
+    function fmt(ms) {
+      const total = Math.max(0, Math.ceil(ms / 1000));
+      const hh = String(Math.floor(total / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+      const ss = String(total % 60).padStart(2, "0");
+      return hh + ":" + mm + ":" + ss;
+    }
+
+    function setInputsEnabled(on) {
+      hInput.disabled = mInput.disabled = sInput.disabled = !on;
+      document.querySelectorAll(".presets .btn").forEach(b => b.disabled = !on);
+    }
+
+    function syncDisplayFromInputs() {
+      const ms = readInputs();
+      if (ms >= 0) display.textContent = fmt(ms);
+    }
+
+    function tick() {
+      const left = endAt - Date.now();
+      display.textContent = fmt(left);
+      if (left <= 0) {
+        stopTick();
+        onFinish();
+      }
+    }
+
+    function stopTick() {
+      clearInterval(tickTimer);
+      tickTimer = null;
+    }
+
+    function onFinish() {
+      running = false;
+      display.classList.add("done");          // 视觉提醒（AC7，兜底方案）
+      beep();
+      startBtn.disabled = false;
+      startBtn.textContent = "开始";
+      pauseBtn.disabled = true;
+      resetBtn.disabled = false;
+      setInputsEnabled(true);
+    }
+
+    function beep() {
+      // 用 WebAudio 合成提示音，不依赖音频文件
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        let i = 0;
+        const play = () => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = 880;
+          osc.connect(gain).connect(ctx.destination);
+          gain.gain.setValueAtTime(0.25, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.25);
+          if (++i < 3) setTimeout(play, 350);
+        };
+        play();
+      } catch (e) { /* 提示音失败时视觉闪烁已兜底 */ }
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (running) return;
+      error.textContent = "";
+      display.classList.remove("done");
+      const total = remainMs > 0 ? remainMs : readInputs();
+      if (total <= 0) {
+        error.textContent = "请输入大于 0 的时长";
+        return;
+      }
+      endAt = Date.now() + total;             // 记录目标时刻（AC8）
+      remainMs = 0;
+      running = true;
+      setInputsEnabled(false);                // 计时中锁定输入（AC9）
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      pauseBtn.textContent = "暂停";
+      resetBtn.disabled = false;
+      display.textContent = fmt(total);
+      tickTimer = setInterval(tick, 250);
+    });
+
+    pauseBtn.addEventListener("click", () => {
+      if (!running) return;
+      if (pauseBtn.textContent === "暂停") {
+        remainMs = Math.max(0, endAt - Date.now());
+        stopTick();
+        pauseBtn.textContent = "继续";
+      } else {
+        endAt = Date.now() + remainMs;
+        remainMs = 0;
+        tickTimer = setInterval(tick, 250);
+        pauseBtn.textContent = "暂停";
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      stopTick();
+      running = false;
+      remainMs = 0;
+      display.classList.remove("done");
+      setInputsEnabled(true);
+      syncDisplayFromInputs();
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      pauseBtn.textContent = "暂停";
+      resetBtn.disabled = true;
+    });
+
+    [hInput, mInput, sInput].forEach(el => el.addEventListener("input", syncDisplayFromInputs));
+
+    document.querySelectorAll(".presets .btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const min = parseInt(btn.dataset.min);
+        hInput.value = Math.floor(min / 60);
+        mInput.value = min % 60;
+        sInput.value = 0;
+        syncDisplayFromInputs();
+      });
+    });
+
+    syncDisplayFromInputs();
+  </script>
+</body>
+</html>
