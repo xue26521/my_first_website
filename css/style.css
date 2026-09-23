@@ -82,6 +82,25 @@ input:focus, select:focus { outline: 2px solid #667eea; border-color: transparen
 .nav-item .name { font-weight: 700; }
 .nav-item .desc { font-size: .82rem; color: #64748b; }
 
+/* 页面状态（Day 8）：加载骨架屏 / 空 / 错误 */
+.skeleton-item {
+  height: 68px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.state-box { text-align: center; padding: 28px 12px; }
+.state-icon { font-size: 2.4rem; }
+.state-title { font-weight: 700; margin: 8px 0 4px; }
+.state-hint { color: #94a3b8; font-size: .85rem; text-align: center; }
+.state-box .btn { margin-top: 10px; }
+
 /* 手机宽度适配（约 375px） */
 @media (max-width: 480px) {
   .card { padding: 20px 16px; }

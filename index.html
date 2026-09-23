@@ -12,37 +12,87 @@
     <h1>🧰 效率小工具箱</h1>
     <p class="sub">打开即用 · 免登录 · 无广告 · 数据不出你的电脑</p>
 
-    <a class="nav-item" href="timer.html">
-      <span class="icon">⏱️</span>
-      <span>
-        <div class="name">倒计时器</div>
-        <div class="desc">设置倒计时，时间到提醒你</div>
-      </span>
-    </a>
+    <!-- 状态 1：加载中（骨架屏） -->
+    <div id="stateLoading" hidden>
+      <div class="skeleton-item"></div>
+      <div class="skeleton-item"></div>
+      <div class="skeleton-item"></div>
+      <p class="state-hint">工具列表加载中…</p>
+    </div>
 
-    <a class="nav-item" href="converter.html">
-      <span class="icon">📐</span>
-      <span>
-        <div class="name">单位换算器</div>
-        <div class="desc">长度 / 重量 / 温度互转</div>
-      </span>
-    </a>
+    <!-- 状态 2：空（加载成功但没有数据） -->
+    <div id="stateEmpty" class="state-box" hidden>
+      <div class="state-icon">📭</div>
+      <div class="state-title">暂无可用工具</div>
+      <p class="state-hint">工具箱是空的，去看看是不是数据配置丢了</p>
+    </div>
 
-    <a class="nav-item" href="password.html">
-      <span class="icon">🔑</span>
-      <span>
-        <div class="name">密码生成器</div>
-        <div class="desc">本地生成随机强密码</div>
-      </span>
-    </a>
+    <!-- 状态 3：错误（加载失败，给出重试入口） -->
+    <div id="stateError" class="state-box" hidden>
+      <div class="state-icon">⚠️</div>
+      <div class="state-title">工具列表加载失败</div>
+      <p class="state-hint" id="errorDetail"></p>
+      <button class="btn" id="retryBtn">重试</button>
+    </div>
 
-    <a class="nav-item" href="translate.html">
-      <span class="icon">🌐</span>
-      <span>
-        <div class="name">中英翻译</div>
-        <div class="desc">离线词典，双向互译</div>
-      </span>
-    </a>
+    <!-- 状态 4：正常（渲染工具卡片列表） -->
+    <div id="toolList"></div>
   </main>
+
+  <script src="js/tools-data.js"></script>
+  <script>
+    const els = {
+      loading: document.getElementById("stateLoading"),
+      empty: document.getElementById("stateEmpty"),
+      error: document.getElementById("stateError"),
+      errorDetail: document.getElementById("errorDetail"),
+      list: document.getElementById("toolList"),
+    };
+
+    /* 四状态互斥切换：同一时间只显示一种 */
+    function show(state) {
+      els.loading.hidden = state !== "loading";
+      els.empty.hidden = state !== "empty";
+      els.error.hidden = state !== "error";
+      if (state !== "success") els.list.innerHTML = "";
+    }
+
+    function renderTools(tools) {
+      els.list.innerHTML = "";
+      for (const t of tools) {
+        const a = document.createElement("a");
+        a.className = "nav-item";
+        a.href = t.url;
+        const icon = document.createElement("span");
+        icon.className = "icon";
+        icon.textContent = t.icon;
+        const body = document.createElement("span");
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = t.name;
+        const desc = document.createElement("div");
+        desc.className = "desc";
+        desc.textContent = t.tag ? t.desc + " · " + t.tag : t.desc;
+        body.append(name, desc);
+        a.append(icon, body);
+        els.list.appendChild(a);
+      }
+    }
+
+    async function loadTools() {
+      show("loading");
+      try {
+        const tools = await fetchTools();
+        if (tools.length === 0) show("empty");
+        else { show("success"); renderTools(tools); }
+      } catch (err) {
+        els.errorDetail.textContent = "错误信息：" + err.message;
+        show("error");
+      }
+    }
+
+    document.getElementById("retryBtn").addEventListener("click", loadTools);
+    loadTools();
+  </script>
 </body>
 </html>
