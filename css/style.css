@@ -20,12 +20,22 @@ body {
   align-self: center;
 }
 h1 { font-size: 1.5rem; margin: 0 0 4px; }
-.sub { color: #64748b; font-size: .9rem; margin-bottom: 20px; }
-.back { display: inline-block; margin-bottom: 14px; color: #667eea; text-decoration: none; font-size: .9rem; }
-.back:hover { text-decoration: underline; }
+.sub { color: #475569; font-size: .9rem; margin-bottom: 24px; }
+.back {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: #4c5fd7;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: .9rem;
+  padding: 4px 10px;
+  margin-left: -10px;
+  border-radius: 6px;
+}
+.back:hover { background: #eef0fd; text-decoration: none; }
 
 /* 表单控件 */
-label { display: block; font-size: .9rem; color: #475569; margin: 14px 0 6px; }
+label { display: block; font-size: .9rem; color: #334155; font-weight: 600; margin: 16px 0 6px; }
 input[type="text"], input[type="number"], select {
   width: 100%;
   padding: 10px 12px;
@@ -53,7 +63,7 @@ input:focus, select:focus { outline: 2px solid #667eea; border-color: transparen
 
 /* 结果与提示 */
 .result {
-  margin-top: 20px;
+  margin-top: 28px;
   padding: 14px 16px;
   background: #f1f5f9;
   border-radius: 10px;
@@ -68,19 +78,24 @@ input:focus, select:focus { outline: 2px solid #667eea; border-color: transparen
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
+  gap: 16px;
+  padding: 16px 18px;
   border: 1.5px solid #e2e8f0;
   border-radius: 12px;
   text-decoration: none;
   color: #1e293b;
   margin-bottom: 12px;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
 }
-.nav-item:hover { border-color: #667eea; }
-.nav-item .icon { font-size: 1.8rem; }
-.nav-item .name { font-weight: 700; }
-.nav-item .desc { font-size: .82rem; color: #64748b; }
+.nav-item:hover { border-color: #667eea; box-shadow: 0 2px 10px rgba(102, 126, 234, .15); }
+.nav-item .icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transform: translateY(2px);
+}
+.nav-item .name { font-weight: 700; line-height: 1.4; }
+.nav-item .desc { font-size: .82rem; color: #475569; margin-top: 3px; line-height: 1.5; }
 
 /* 页面状态（Day 8）：加载骨架屏 / 空 / 错误 */
 .skeleton-item {
@@ -98,7 +113,7 @@ input:focus, select:focus { outline: 2px solid #667eea; border-color: transparen
 .state-box { text-align: center; padding: 28px 12px; }
 .state-icon { font-size: 2.4rem; }
 .state-title { font-weight: 700; margin: 8px 0 4px; }
-.state-hint { color: #94a3b8; font-size: .85rem; text-align: center; }
+.state-hint { color: #64748b; font-size: .85rem; text-align: center; }
 .state-box .btn { margin-top: 10px; }
 
 /* 手机宽度适配（约 375px） */
