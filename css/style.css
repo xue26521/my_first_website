@@ -56,6 +56,7 @@ input:focus, select:focus { outline: 2px solid #667eea; border-color: transparen
   cursor: pointer;
 }
 .btn:hover { background: #5a6fd6; }
+.btn:focus-visible { outline: 3px solid #c7d2fe; outline-offset: 2px; }
 .btn.ghost { background: #e2e8f0; color: #334155; }
 .btn.ghost:hover { background: #cbd5e1; }
 .btn:disabled { background: #f1f5f9; color: #94a3b8; border: 1.5px dashed #cbd5e1; cursor: not-allowed; opacity: 1; }
