@@ -12,6 +12,9 @@
     <h1>🧰 效率小工具箱</h1>
     <p class="sub">打开即用 · 免登录 · 无广告 · 数据不出你的电脑</p>
 
+    <!-- 分类筛选栏（Day 12：由 frontend-filter-review Skill 驱动） -->
+    <div class="filter-bar" id="filterBar" role="group" aria-label="按分类筛选工具"></div>
+
     <!-- 状态 1：加载中（骨架屏） -->
     <div id="stateLoading" hidden>
       <div class="skeleton-item"></div>
@@ -25,6 +28,13 @@
       <div class="state-icon">📭</div>
       <div class="state-title">暂无可用工具</div>
       <p class="state-hint">工具箱是空的，去看看是不是数据配置丢了</p>
+    </div>
+
+    <!-- 状态 2b：筛选无结果（选中分类没有匹配项） -->
+    <div id="stateNoResult" class="state-box" hidden>
+      <div class="state-icon">🔍</div>
+      <div class="state-title">该分类下暂无工具</div>
+      <p class="state-hint">试试其他分类，或点「全部」查看完整列表</p>
     </div>
 
     <!-- 状态 3：错误（加载失败，给出重试入口） -->
@@ -44,18 +54,24 @@
     const els = {
       loading: document.getElementById("stateLoading"),
       empty: document.getElementById("stateEmpty"),
+      noResult: document.getElementById("stateNoResult"),
       error: document.getElementById("stateError"),
       errorDetail: document.getElementById("errorDetail"),
       list: document.getElementById("toolList"),
+      filterBar: document.getElementById("filterBar"),
     };
 
-    /* 四状态互斥切换：同一时间只显示一种 */
+    /* 六状态互斥切换：同一时间只显示一种 */
     function show(state) {
       els.loading.hidden = state !== "loading";
       els.empty.hidden = state !== "empty";
+      els.noResult.hidden = state !== "noResult";
       els.error.hidden = state !== "error";
       if (state !== "success") els.list.innerHTML = "";
     }
+
+    let allTools = [];       // 缓存完整列表，供筛选与恢复
+    let activeTag = "全部";  // 当前筛选分类
 
     function renderTools(tools) {
       els.list.innerHTML = "";
@@ -79,12 +95,41 @@
       }
     }
 
+    /* 生成筛选栏：去重 tag + 「全部」 */
+    function buildFilterBar() {
+      const tags = ["全部", ...new Set(allTools.map(t => t.tag).filter(Boolean))];
+      els.filterBar.innerHTML = "";
+      tags.forEach(tag => {
+        const btn = document.createElement("button");
+        btn.className = "filter-chip";
+        btn.textContent = tag;
+        btn.setAttribute("aria-pressed", tag === activeTag ? "true" : "false");
+        if (tag === activeTag) btn.classList.add("active");
+        btn.addEventListener("click", () => applyFilter(tag));
+        els.filterBar.appendChild(btn);
+      });
+    }
+
+    /* 核心筛选逻辑：有结果 / 无结果 / 清空恢复 */
+    function applyFilter(tag) {
+      activeTag = tag;
+      buildFilterBar();                       // 刷新选中态
+      const filtered = tag === "全部" ? allTools : allTools.filter(t => t.tag === tag);
+      if (filtered.length === 0) show("noResult");
+      else { show("success"); renderTools(filtered); }
+    }
+
     async function loadTools() {
       show("loading");
       try {
         const tools = await fetchTools();
         if (tools.length === 0) show("empty");
-        else { show("success"); renderTools(tools); }
+        else {
+          allTools = tools;
+          show("success");
+          buildFilterBar();
+          renderTools(tools);
+        }
       } catch (err) {
         els.errorDetail.textContent = "错误信息：" + err.message;
         show("error");
