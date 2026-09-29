@@ -12,41 +12,70 @@
     <h1>🧰 效率小工具箱</h1>
     <p class="sub">打开即用 · 免登录 · 无广告 · 数据不出你的电脑</p>
 
-    <!-- 分类筛选栏（Day 12：由 frontend-filter-review Skill 驱动） -->
-    <div class="filter-bar" id="filterBar" role="group" aria-label="按分类筛选工具"></div>
+    <!-- 视图导航（Day 13：hash 路由切换三个视图） -->
+    <nav class="view-tabs" id="viewTabs" role="tablist" aria-label="视图切换"></nav>
 
-    <!-- 状态 1：加载中（骨架屏） -->
-    <div id="stateLoading" hidden>
-      <div class="skeleton-item"></div>
-      <div class="skeleton-item"></div>
-      <div class="skeleton-item"></div>
-      <p class="state-hint">工具列表加载中…</p>
-    </div>
+    <!-- 视图 1：工具列表 -->
+    <section id="view-tools" role="tabpanel">
+      <!-- 分类筛选栏（Day 12：由 frontend-filter-review Skill 驱动） -->
+      <div class="filter-bar" id="filterBar" role="group" aria-label="按分类筛选工具"></div>
 
-    <!-- 状态 2：空（加载成功但没有数据） -->
-    <div id="stateEmpty" class="state-box" hidden>
-      <div class="state-icon">📭</div>
-      <div class="state-title">暂无可用工具</div>
-      <p class="state-hint">工具箱是空的，去看看是不是数据配置丢了</p>
-    </div>
+      <!-- 状态 1：加载中（骨架屏） -->
+      <div id="stateLoading" hidden>
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+        <div class="skeleton-item"></div>
+        <p class="state-hint">工具列表加载中…</p>
+      </div>
 
-    <!-- 状态 2b：筛选无结果（选中分类没有匹配项） -->
-    <div id="stateNoResult" class="state-box" hidden>
-      <div class="state-icon">🔍</div>
-      <div class="state-title">该分类下暂无工具</div>
-      <p class="state-hint">试试其他分类，或点「全部」查看完整列表</p>
-    </div>
+      <!-- 状态 2：空（加载成功但没有数据） -->
+      <div id="stateEmpty" class="state-box" hidden>
+        <div class="state-icon">📭</div>
+        <div class="state-title">暂无可用工具</div>
+        <p class="state-hint">工具箱是空的，去看看是不是数据配置丢了</p>
+      </div>
 
-    <!-- 状态 3：错误（加载失败，给出重试入口） -->
-    <div id="stateError" class="state-box" hidden>
-      <div class="state-icon">⚠️</div>
-      <div class="state-title">工具列表加载失败</div>
-      <p class="state-hint" id="errorDetail"></p>
-      <button class="btn" id="retryBtn">重试</button>
-    </div>
+      <!-- 状态 2b：筛选无结果（选中分类没有匹配项） -->
+      <div id="stateNoResult" class="state-box" hidden>
+        <div class="state-icon">🔍</div>
+        <div class="state-title">该分类下暂无工具</div>
+        <p class="state-hint">试试其他分类，或点「全部」查看完整列表</p>
+      </div>
 
-    <!-- 状态 4：正常（渲染工具卡片列表） -->
-    <div id="toolList"></div>
+      <!-- 状态 3：错误（加载失败，给出重试入口） -->
+      <div id="stateError" class="state-box" hidden>
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">工具列表加载失败</div>
+        <p class="state-hint" id="errorDetail"></p>
+        <button class="btn" id="retryBtn">重试</button>
+      </div>
+
+      <!-- 状态 4：正常（渲染工具卡片列表） -->
+      <div id="toolList"></div>
+    </section>
+
+    <!-- 视图 2：关于项目 -->
+    <section id="view-about" class="view-panel" role="tabpanel" hidden>
+      <h2>关于本项目</h2>
+      <p>这是一个学习用「效率小工具箱」，从 Day 2 的一个占位页逐步长成今天的样子。</p>
+      <ul class="plain-list">
+        <li>📐 纯前端：原生 HTML + CSS + JavaScript，零第三方库</li>
+        <li>🔒 零联网：所有计算都在你的浏览器里，数据不上传</li>
+        <li>🗺️ 四工具：倒计时 / 单位换算 / 密码生成 / 中英翻译</li>
+      </ul>
+    </section>
+
+    <!-- 视图 3：使用说明 -->
+    <section id="view-guide" class="view-panel" role="tabpanel" hidden>
+      <h2>使用说明</h2>
+      <p>所有工具都「打开即用」，无需登录或设置：</p>
+      <ul class="plain-list">
+        <li>⏱️ 倒计时器：填好时分秒 → 开始，时间到会闪烁并响铃</li>
+        <li>📐 单位换算器：输入数字，选单位，结果实时出来</li>
+        <li>🔑 密码生成器：选长度和字符集 → 生成 → 一键复制</li>
+        <li>🌐 中英翻译：输入内容，自动识别方向并逐词翻译</li>
+      </ul>
+    </section>
   </main>
 
   <script src="js/tools-data.js"></script>
@@ -59,7 +88,53 @@
       errorDetail: document.getElementById("errorDetail"),
       list: document.getElementById("toolList"),
       filterBar: document.getElementById("filterBar"),
+      viewTabs: document.getElementById("viewTabs"),
     };
+
+    /* ===== Day 13：hash 路由（视图切换）=====
+     * 三个视图：#/tools 工具列表、#/about 关于、#/guide 使用说明
+     * 用 location.hash 切换，不引入路由库，刷新/分享都能定位到同一视图
+     */
+    const VIEWS = {
+      tools:  { id: "view-tools",  label: "🧰 工具" },
+      about:  { id: "view-about",  label: "ℹ️ 关于" },
+      guide:  { id: "view-guide",  label: "📖 说明" },
+    };
+    let currentView = "tools";
+
+    function buildViewTabs() {
+      els.viewTabs.innerHTML = "";
+      Object.entries(VIEWS).forEach(([key, v]) => {
+        const b = document.createElement("button");
+        b.className = "view-tab";
+        b.textContent = v.label;
+        b.setAttribute("role", "tab");
+        b.setAttribute("aria-selected", key === currentView ? "true" : "false");
+        if (key === currentView) b.classList.add("active");
+        b.addEventListener("click", () => { location.hash = "/" + key; });
+        els.viewTabs.appendChild(b);
+      });
+    }
+
+    function renderView(view) {
+      currentView = view;
+      // 切换 tab 高亮
+      els.viewTabs.querySelectorAll(".view-tab").forEach((b, i) => {
+        const key = Object.keys(VIEWS)[i];
+        const on = key === view;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      // 切换面板显隐
+      Object.entries(VIEWS).forEach(([key, v]) => {
+        document.getElementById(v.id).hidden = key !== view;
+      });
+    }
+
+    function parseHash() {
+      const h = location.hash.replace(/^#\/?/, "").trim();
+      return VIEWS[h] ? h : "tools";
+    }
 
     /* 六状态互斥切换：同一时间只显示一种 */
     function show(state) {
@@ -137,7 +212,14 @@
     }
 
     document.getElementById("retryBtn").addEventListener("click", loadTools);
+
+    /* 初始化：先建 tab，再按当前 hash 渲染视图，最后加载列表 */
+    buildViewTabs();
+    renderView(parseHash());
     loadTools();
+
+    /* 监听 hash 变化：地址栏/返回键/前进键都会触发视图切换 */
+    window.addEventListener("hashchange", () => renderView(parseHash()));
   </script>
 </body>
 </html>
