@@ -1,0 +1,13 @@
+{
+  "envId": "mywebsite-d7gwnykd4faa93718",
+  "functions": [
+    {
+      "name": "health",
+      "timeout": 30,
+      "runtime": "Nodejs20.19",
+      "memorySize": 256,
+      "installDependency": false,
+      "dir": "cloudfunctions/health"
+    }
+  ]
+}

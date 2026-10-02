@@ -4,6 +4,9 @@
 # 依赖目录（Day 7 之后可能会用到）
 node_modules/
 
+# 静态托管发布目录（Day 15：由源文件复制生成，可随时重建，不入库）
+dist/
+
 # 系统与编辑器杂项
 .DS_Store
 Thumbs.db
