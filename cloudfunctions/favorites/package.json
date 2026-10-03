@@ -1,0 +1,7 @@
+{
+  "name": "favorites",
+  "version": "1.0.0",
+  "description": "读接口 /api/favorites：返回收藏的工具列表（经 REST 网关读 PostgreSQL）",
+  "main": "index.js",
+  "dependencies": {}
+}

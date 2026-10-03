@@ -1,6 +1,10 @@
 # 本地秘密文件：以后存数据库等配置，绝不上传
 .env
 
+# 部署产生的临时文件（Day 17 起）
+cloudbaserc.deploy.json
+*.log
+
 # 依赖目录（Day 7 之后可能会用到）
 node_modules/
 

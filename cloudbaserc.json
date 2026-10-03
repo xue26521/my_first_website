@@ -8,6 +8,28 @@
       "memorySize": 256,
       "installDependency": false,
       "dir": "cloudfunctions/health"
+    },
+    {
+      "name": "hot",
+      "timeout": 30,
+      "runtime": "Nodejs20.19",
+      "memorySize": 256,
+      "installDependency": false,
+      "dir": "cloudfunctions/hot",
+      "envVariables": {
+        "ENV_ID": "mywebsite-d7gwnykd4faa93718"
+      }
+    },
+    {
+      "name": "favorites",
+      "timeout": 30,
+      "runtime": "Nodejs20.19",
+      "memorySize": 256,
+      "installDependency": false,
+      "dir": "cloudfunctions/favorites",
+      "envVariables": {
+        "ENV_ID": "mywebsite-d7gwnykd4faa93718"
+      }
     }
   ]
 }
