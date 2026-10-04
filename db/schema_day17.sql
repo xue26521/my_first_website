@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS favorites (
 -- 高频查询：按工具查收藏、按时间排序，给外键建索引。
 CREATE INDEX IF NOT EXISTS idx_favorites_tool_id ON favorites (tool_id);
 
+-- Day 18 追加：防重复收藏 —— 同一工具只能收藏一次。
+-- 通过 tool_id 唯一约束，重复提交由数据库层直接拒绝（配合 ON CONFLICT DO NOTHING）。
+CREATE UNIQUE INDEX IF NOT EXISTS favorites_tool_id_unique ON favorites (tool_id);
+
 -- =====================================================================
 -- 说明：
 --   hot 表存外部真实热搜（接 60s.viki.moe / xxapi 微博热搜源）。

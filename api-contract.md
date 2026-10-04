@@ -58,13 +58,79 @@ GET /api/health
 3. **跨域**：响应头已带 `Access-Control-Allow-Origin: *`，前端可直接 fetch，无需额外配置（跨域配置正式版 Day 20 收尾）。
 4. **字段命名**：小驼峰（camelCase），如 `envId`、`createTime`。
 
-## 4. 下一步（Day 16–20）
+## 4. 业务接口（Day 17–18 新增）
+
+### 4.1 GET /api/hot —— 热门工具/热搜列表（Day 17）
+
+**用途**：返回按热度倒序的真实热搜数据（接 60s.viki.moe 微博热搜源入库）。
+
+**请求**：`GET /api/hot?limit=20`（`limit` 可选，默认 20，最大 50）
+
+**响应（200 OK）**：
+```json
+{
+  "ok": true,
+  "data": [
+    { "id": 1, "title": "…", "hotValue": 1348614, "url": "https://…", "source": "weibo", "fetchedAt": "2026-10-04T…" }
+  ]
+}
+```
+
+### 4.2 GET /api/favorites —— 收藏列表（Day 17）
+
+**用途**：返回用户收藏的工具列表（JOIN tools 带出工具名/图标）。
+
+**响应（200 OK）**：
+```json
+{
+  "ok": true,
+  "data": [
+    { "id": 1, "toolId": 1, "name": "倒计时器", "icon": "⏱️", "slug": "timer", "createdAt": "2026-10-03T…" }
+  ]
+}
+```
+
+### 4.3 POST /api/favorites —— 收藏一个工具（Day 18）
+
+**用途**：写入一条收藏记录。这是本项目的第一个写接口。
+
+**请求**：
+```
+POST /api/favorites
+Content-Type: application/json
+
+{ "toolId": 4 }
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `toolId` | number（正整数） | 是 | 要收藏的工具 id（对应 tools.id） |
+
+**成功响应（201 Created）**：
+```json
+{
+  "ok": true,
+  "data": { "id": 4, "toolId": 4, "createdAt": "2026-10-04T…" }
+}
+```
+
+**错误响应（中文提示）**：
+
+| 场景 | 状态码 | 响应 |
+|---|---|---|
+| 缺 `toolId` / 非正整数 | 400 | `{ "ok": false, "message": "缺少必填字段 toolId，或 toolId 不是正整数" }` |
+| `toolId` 对应工具不存在 | 400 | `{ "ok": false, "message": "工具不存在（toolId=999），无法收藏" }` |
+| 重复收藏（已存在） | 409 | `{ "ok": false, "message": "该工具已在收藏列表中，请勿重复收藏" }` |
+
+> 防重复：`favorites.tool_id` 有唯一约束，重复提交由数据库层兜底拒绝。
+
+## 5. 下一步（Day 19–20）
 
 - [ ] 真实业务接口（工具数据、用户数据）
 - [ ] 数据库建表
 - [ ] 跨域细粒度配置
 - [ ] 正式域名（去测试域名提示页）
 
-## 5. 测试域名提示页说明
+## 6. 测试域名提示页说明
 
 测试域名 `*.service.tcloudbase.com` 首次访问会弹出腾讯云的「测试域名」安全提示页，需点「确定访问」才展示内容。这是**测试域名的正常行为**，正式域名（绑定自定义域名后）不会有此提示。
