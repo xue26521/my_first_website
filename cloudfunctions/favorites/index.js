@@ -2,25 +2,15 @@
  * /api/favorites 读写接口（HTTP 云函数）
  * Day 17：读 favorites 表（JOIN tools），返回收藏的工具列表。
  * Day 18：新增 POST 写入，支持收藏一个工具，并做三重输入防护。
- *
- * 数据访问：REST 网关 + API Key（PostgREST 规范，同 hot）。
+ * Day 19：重构 —— 数据库操作抽到 db.js（数据访问层），本文件只保留 HTTP 路由 + 校验逻辑。
  *
  * GET  返回结构：{ ok: true, data: [{ id, toolId, name, icon, slug, createdAt }] }
  * POST 请求体：  { toolId: number }  （必填）
  * POST 成功返回：{ ok: true, data: { id, toolId, createdAt } }
  * POST 错误返回：{ ok: false, message: "中文提示" }
- *
- * 防重复提交 / 错误输入（Day 18 核心）：
- *   1. toolId 缺失或非正整数  → 400「缺少必填字段 toolId」
- *   2. toolId 对应工具不存在  → 400「工具不存在，无法收藏」
- *   3. 该工具已收藏过        → 409「该工具已在收藏列表中，请勿重复收藏」
- *   数据库层另有 tool_id 唯一约束兜底，双重保障。
  */
 const http = require("http");
-
-const ENV_ID = process.env.ENV_ID || "mywebsite-d7gwnykd4faa93718";
-const API_KEY = process.env.CLOUDBASE_API_KEY || "";
-const GATEWAY = `https://${ENV_ID}.api.tcloudbasegateway.com`;
+const db = require("./db");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -59,81 +49,8 @@ function readBody(req) {
   });
 }
 
-// 通过 REST 网关读工具，校验 toolId 是否存在
-async function toolExists(toolId) {
-  const resp = await fetch(
-    `${GATEWAY}/v1/rdb/rest/tools?select=id&id=eq.${toolId}`,
-    { headers: { Authorization: `Bearer ${API_KEY}` } }
-  );
-  if (!resp.ok) throw new Error(`tools 查询失败: ${resp.status}`);
-  const rows = await resp.json();
-  return rows.length > 0;
-}
-
-// 通过 REST 网关查该工具是否已收藏
-async function alreadyFavorited(toolId) {
-  const resp = await fetch(
-    `${GATEWAY}/v1/rdb/rest/favorites?select=id&tool_id=eq.${toolId}`,
-    { headers: { Authorization: `Bearer ${API_KEY}` } }
-  );
-  if (!resp.ok) throw new Error(`favorites 查询失败: ${resp.status}`);
-  const rows = await resp.json();
-  return rows.length > 0;
-}
-
-// 写入收藏记录（PostgREST INSERT）
-async function insertFavorite(toolId) {
-  const resp = await fetch(`${GATEWAY}/v1/rdb/rest/favorites`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-      "Content-Type": "application/json",
-      Prefer: "return=representation",
-    },
-    body: JSON.stringify({ tool_id: toolId }),
-  });
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`favorites 写入失败 ${resp.status}: ${text.slice(0, 200)}`);
-  }
-  const rows = await resp.json();
-  return rows[0];
-}
-
 async function handleGet(res) {
-  const favResp = await fetch(
-    `${GATEWAY}/v1/rdb/rest/favorites?select=id,tool_id,created_at&order=created_at.desc`,
-    { headers: { Authorization: `Bearer ${API_KEY}` } }
-  );
-  if (!favResp.ok) throw new Error(`favorites 查询失败: ${favResp.status}`);
-  const favs = await favResp.json();
-
-  if (favs.length === 0) {
-    sendJson(res, 200, { ok: true, data: [] });
-    return;
-  }
-
-  const toolIds = [...new Set(favs.map((f) => f.tool_id))];
-  const toolResp = await fetch(
-    `${GATEWAY}/v1/rdb/rest/tools?select=id,name,icon,slug&id=in.(${toolIds.join(",")})`,
-    { headers: { Authorization: `Bearer ${API_KEY}` } }
-  );
-  if (!toolResp.ok) throw new Error(`tools 查询失败: ${toolResp.status}`);
-  const tools = await toolResp.json();
-  const toolMap = Object.fromEntries(tools.map((t) => [t.id, t]));
-
-  const data = favs.map((f) => {
-    const t = toolMap[f.tool_id] || {};
-    return {
-      id: f.id,
-      toolId: f.tool_id,
-      name: t.name || "未知工具",
-      icon: t.icon || "🧰",
-      slug: t.slug || "",
-      createdAt: f.created_at,
-    };
-  });
-
+  const data = await db.listFavorites();
   sendJson(res, 200, { ok: true, data });
 }
 
@@ -149,7 +66,7 @@ async function handlePost(res, body) {
   }
 
   // 防护 2：toolId 对应的工具不存在（错误输入）
-  if (!(await toolExists(toolId))) {
+  if (!(await db.toolExists(toolId))) {
     sendJson(res, 400, {
       ok: false,
       message: `工具不存在（toolId=${toolId}），无法收藏`,
@@ -158,7 +75,7 @@ async function handlePost(res, body) {
   }
 
   // 防护 3：重复提交（该工具已收藏）
-  if (await alreadyFavorited(toolId)) {
+  if (await db.alreadyFavorited(toolId)) {
     sendJson(res, 409, {
       ok: false,
       message: "该工具已在收藏列表中，请勿重复收藏",
@@ -167,7 +84,7 @@ async function handlePost(res, body) {
   }
 
   // 写入（唯一约束兜底，若并发重复插入会抛错走 catch）
-  const row = await insertFavorite(toolId);
+  const row = await db.insertFavorite(toolId);
   console.log(`[favorites] 新增收藏: id=${row.id}, toolId=${toolId}`);
 
   sendJson(res, 201, {
