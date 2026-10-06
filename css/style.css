@@ -117,6 +117,9 @@ input:focus, select:focus { outline: 2px solid #667eea; border-color: transparen
 .state-hint { color: #64748b; font-size: .85rem; text-align: center; }
 .state-box .btn { margin-top: 10px; }
 
+/* 数据最后更新时间（Day 20 余力加练） */
+.update-hint { color: #94a3b8; font-size: .78rem; text-align: center; margin-top: 12px; }
+
 /* 分类筛选栏（Day 12） */
 .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .filter-chip {

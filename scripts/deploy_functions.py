@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-deploy_functions.py —— 部署 hot / favorites 两个 HTTP 云函数（Day 17）
+deploy_functions.py —— 部署 hot / favorites / tools 三个 HTTP 云函数（Day 17 + Day 20）
 
 关键点：
 1. 读取 .env 里的 CLOUDBASE_API_KEY（service_role API Key，敏感，不入库）
@@ -19,7 +19,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TCB = r"C:/Users/雪泽/.workbuddy/binaries/node/versions/22.22.2-3/tcb.cmd"
+TCB = r"C:/Users/雪泽/.workbuddy/binaries/node/versions/22.22.2-6/tcb.cmd"
 
 
 def load_env():
@@ -72,14 +72,26 @@ def main():
                     "CLOUDBASE_API_KEY": api_key,
                 },
             },
+            {
+                "name": "tools",
+                "timeout": 30,
+                "runtime": "Nodejs20.19",
+                "memorySize": 256,
+                "installDependency": False,
+                "dir": "cloudfunctions/tools",
+                "envVariables": {
+                    "ENV_ID": env_id,
+                    "CLOUDBASE_API_KEY": api_key,
+                },
+            },
         ],
     }
     with open(tmp_config, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
-    # 部署两个函数
+    # 部署三个函数
     try:
-        for fn_name, path in [("hot", "/api/hot"), ("favorites", "/api/favorites")]:
+        for fn_name, path in [("hot", "/api/hot"), ("favorites", "/api/favorites"), ("tools", "/api/tools")]:
             print(f"[deploy] 部署 {fn_name} ...")
             # 用临时配置文件 + --httpFn + --path 部署
             cmd = [

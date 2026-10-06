@@ -1,26 +1,41 @@
-/* Mock 数据 · 工具箱主视图
+/* 工具箱主视图 · 数据源
  * Day 8：模拟将来从 API 返回的工具列表数据
- * 第 3 周接真实 API 时，只需把数据源从本文件换成 fetch，页面逻辑不变
+ * Day 20：接入真实后端 —— fetch 公网 /api/tools 接口，拿到数据库真实数据。
+ *         字段映射：接口 category→tag、description→desc，并补上各工具的落地页 url。
  */
-const MOCK_TOOLS = [
-  { id: "timer",     name: "倒计时器",   icon: "⏱️", desc: "设置倒计时，时间到提醒你", url: "timer.html",     tag: "时间管理" },
-  { id: "converter", name: "单位换算器", icon: "📐", desc: "长度 / 重量 / 温度互转",   url: "converter.html", tag: "计算" },
-  { id: "password",  name: "密码生成器", icon: "🔑", desc: "本地生成随机强密码",       url: "password.html",  tag: "安全" },
-  { id: "translate", name: "中英翻译",   icon: "🌐", desc: "离线词典，双向互译",       url: "translate.html", tag: "语言" },
-];
 
-/* 模拟接口：延迟 600ms 返回数据，复刻真实 API 的异步感
- * 调试参数（仅本地演示用）：
- *   ?state=empty  → 返回空数组（演示空状态）
- *   ?state=error  → 抛出错误（演示错误状态）
+// 公网接口根地址（云函数 HTTP 网关）
+// 前端静态托管域名与接口域名不同源，靠后端返回的 CORS 头放行（见 api-contract.md §3.3）
+const API_BASE = "https://mywebsite-d7gwnykd4faa93718.service.tcloudbase.com";
+
+// 各工具 slug 对应的落地页地址（tools 表只存元信息，不存页面 url）
+const TOOL_PAGES = {
+  timer: "timer.html",
+  converter: "converter.html",
+  password: "password.html",
+  translate: "translate.html",
+};
+
+/* 从公网接口拉取已上线工具列表
+ * 返回 { tools: [...], updatedAt: string|null }
+ * tools 字段对齐前端渲染：{ id, name, icon, desc, tag, url }
  */
-function fetchTools() {
-  const state = new URLSearchParams(location.search).get("state");
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (state === "error") reject(new Error("模拟加载失败"));
-      else if (state === "empty") resolve([]);
-      else resolve(MOCK_TOOLS);
-    }, 600);
-  });
+async function fetchTools() {
+  const resp = await fetch(`${API_BASE}/api/tools`);
+  if (!resp.ok) {
+    throw new Error(`接口返回 ${resp.status}`);
+  }
+  const json = await resp.json();
+  if (!json.ok || !Array.isArray(json.data)) {
+    throw new Error("接口返回格式异常");
+  }
+  const tools = json.data.map((t) => ({
+    id: t.slug,
+    name: t.name,
+    icon: t.icon,
+    desc: t.description,
+    tag: t.category,
+    url: TOOL_PAGES[t.slug] || "#",
+  }));
+  return { tools, updatedAt: json.updatedAt || null };
 }

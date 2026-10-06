@@ -124,6 +124,34 @@ Content-Type: application/json
 
 > 防重复：`favorites.tool_id` 有唯一约束，重复提交由数据库层兜底拒绝。
 
+### 4.4 GET /api/tools —— 已上线工具列表（Day 20）
+
+**用途**：首页展示数据库真实工具数据（`tools` 表 `is_active=true`）。
+
+**请求**：`GET /api/tools`（无参数）
+
+**响应（200 OK）**：
+```json
+{
+  "ok": true,
+  "data": [
+    { "id": 1, "slug": "timer", "name": "倒计时器", "icon": "⏱️", "category": "时间", "description": "…" }
+  ],
+  "updatedAt": "2026-10-02T23:01:38.59664+08:00"
+}
+```
+
+**字段说明**：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `data[].slug` | string | 工具英文短名（唯一键） |
+| `data[].category` | string | 分类（前端映射为筛选 tag） |
+| `data[].description` | string | 一句话简介（前端映射为 desc） |
+| `updatedAt` | string\|null | 已上线工具最近一次更新时间（余力加练：首页「最后更新时间」） |
+
+> 前端落地页 url 由 `slug → TOOL_PAGES` 映射得出，接口不返回 url。
+
 ## 5. 下一步（Day 19–20）
 
 - [ ] 真实业务接口（工具数据、用户数据）

@@ -30,6 +30,17 @@
       "envVariables": {
         "ENV_ID": "mywebsite-d7gwnykd4faa93718"
       }
+    },
+    {
+      "name": "tools",
+      "timeout": 30,
+      "runtime": "Nodejs20.19",
+      "memorySize": 256,
+      "installDependency": false,
+      "dir": "cloudfunctions/tools",
+      "envVariables": {
+        "ENV_ID": "mywebsite-d7gwnykd4faa93718"
+      }
     }
   ]
 }

@@ -52,6 +52,7 @@
 
       <!-- 状态 4：正常（渲染工具卡片列表） -->
       <div id="toolList"></div>
+      <p class="update-hint" id="updateHint" hidden></p>
     </section>
 
     <!-- 视图 2：关于项目 -->
@@ -89,6 +90,7 @@
       list: document.getElementById("toolList"),
       filterBar: document.getElementById("filterBar"),
       viewTabs: document.getElementById("viewTabs"),
+      updateHint: document.getElementById("updateHint"),
     };
 
     /* ===== Day 13：hash 路由（视图切换）=====
@@ -197,13 +199,20 @@
     async function loadTools() {
       show("loading");
       try {
-        const tools = await fetchTools();
+        const { tools, updatedAt } = await fetchTools();
         if (tools.length === 0) show("empty");
         else {
           allTools = tools;
           show("success");
           buildFilterBar();
           renderTools(tools);
+          // 余力加练：展示数据最后更新时间
+          if (updatedAt) {
+            els.updateHint.textContent = "数据更新于 " + new Date(updatedAt).toLocaleString("zh-CN");
+            els.updateHint.hidden = false;
+          } else {
+            els.updateHint.hidden = true;
+          }
         }
       } catch (err) {
         els.errorDetail.textContent = "错误信息：" + err.message;

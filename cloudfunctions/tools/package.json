@@ -1,0 +1,7 @@
+{
+  "name": "tools",
+  "version": "1.0.0",
+  "description": "读接口 /api/tools：返回已上线工具列表（经 REST 网关读 PostgreSQL）",
+  "main": "index.js",
+  "dependencies": {}
+}
