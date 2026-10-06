@@ -12,16 +12,15 @@
 const http = require("http");
 const db = require("./db");
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+// CORS 说明（Day 20 晚间修复）：
+// CloudBase HTTP 网关（WEB_SCF 路由）会自动附加 Access-Control-Allow-Origin: <可信来源>。
+// 云函数若再自带 ACAO: *，响应头会变成 "<origin>,*" 两个值——
+// 浏览器规范只允许一个值，直接报 CORS 错误（Failed to fetch）。
+// 所以这里不再自己设置 CORS 头，跨域统一交给网关处理（见 api-contract.md §3.3）。
 
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
-    ...CORS_HEADERS,
   });
   res.end(JSON.stringify(data));
 }
@@ -99,7 +98,7 @@ async function handlePost(res, body) {
 
 const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") {
-    res.writeHead(204, CORS_HEADERS);
+    res.writeHead(204);
     res.end();
     return;
   }

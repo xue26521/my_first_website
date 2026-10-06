@@ -55,7 +55,7 @@ GET /api/health
 
 1. **统一响应结构**：所有接口都用 `{ code, message, data }` 三层包裹，前端只认这个结构。
 2. **code 语义**：`0` = 成功；其他值 = 错误（具体码位 Day 16–20 定义）。
-3. **跨域**：响应头已带 `Access-Control-Allow-Origin: *`，前端可直接 fetch，无需额外配置（跨域配置正式版 Day 20 收尾）。
+3. **跨域**（Day 20 收尾定稿）：CORS 由 **CloudBase 网关统一处理**——WEB_SCF 路由自动回 `Access-Control-Allow-Origin: <可信来源>`（含本环境静态托管域名），并自动接管 OPTIONS 预检。**云函数内禁止再自带 CORS 头**：否则响应出现 `<origin>,*` 双值，浏览器规范只允许单值，直接报 `Failed to fetch`（Day 20 实测踩坑：curl 不校验 CORS，只有浏览器会暴露）。
 4. **字段命名**：小驼峰（camelCase），如 `envId`、`createTime`。
 
 ## 4. 业务接口（Day 17–18 新增）
@@ -154,9 +154,9 @@ Content-Type: application/json
 
 ## 5. 下一步（Day 19–20）
 
-- [ ] 真实业务接口（工具数据、用户数据）
-- [ ] 数据库建表
-- [ ] 跨域细粒度配置
+- [x] 真实业务接口（Day 17 hot/favorites、Day 20 tools）
+- [x] 数据库建表（Day 16）
+- [x] 跨域细粒度配置（Day 20：网关统一处理，云函数不自带 CORS 头）
 - [ ] 正式域名（去测试域名提示页）
 
 ## 6. 测试域名提示页说明
