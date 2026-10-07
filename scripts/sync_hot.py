@@ -20,7 +20,7 @@ import urllib.request
 
 # CloudBase 配置
 ENV_ID = "mywebsite-d7gwnykd4faa93718"
-TCB = r"C:/Users/雪泽/.workbuddy/binaries/node/versions/22.22.2-3/tcb.cmd"
+TCB = r"C:/Users/雪泽/.workbuddy/binaries/node/versions/22.22.2-6/tcb.cmd"
 
 # 热搜源（主 -> 备）
 SOURCES = [

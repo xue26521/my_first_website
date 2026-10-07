@@ -10,7 +10,7 @@
 <body>
   <main class="card">
     <h1>🧰 效率小工具箱</h1>
-    <p class="sub">打开即用 · 免登录 · 无广告 · 数据不出你的电脑</p>
+    <p class="sub">打开即用 · 免登录 · 无广告 · 云端真实数据</p>
 
     <!-- 视图导航（Day 13：hash 路由切换三个视图） -->
     <nav class="view-tabs" id="viewTabs" role="tablist" aria-label="视图切换"></nav>
@@ -61,7 +61,7 @@
       <p>这是一个学习用「效率小工具箱」，从 Day 2 的一个占位页逐步长成今天的样子。</p>
       <ul class="plain-list">
         <li>📐 纯前端：原生 HTML + CSS + JavaScript，零第三方库</li>
-        <li>🔒 零联网：所有计算都在你的浏览器里，数据不上传</li>
+        <li>☁️ 真实数据：工具列表与今日热点来自云端数据库（第 3 周接入）</li>
         <li>🗺️ 四工具：倒计时 / 单位换算 / 密码生成 / 中英翻译</li>
       </ul>
     </section>
@@ -76,6 +76,19 @@
         <li>🔑 密码生成器：选长度和字符集 → 生成 → 一键复制</li>
         <li>🌐 中英翻译：输入内容，自动识别方向并逐词翻译</li>
       </ul>
+    </section>
+
+    <!-- 视图 4：今日热点（Day 21 补齐：给 /api/hot 一个前端出口） -->
+    <section id="view-hot" class="view-panel" role="tabpanel" hidden>
+      <h2>🔥 今日热点</h2>
+      <p class="state-hint" id="hotMeta"></p>
+      <div id="hotList"></div>
+      <div id="hotError" class="state-box" hidden>
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">热点加载失败</div>
+        <p class="state-hint" id="hotErrorDetail"></p>
+        <button class="btn" id="hotRetryBtn">重试</button>
+      </div>
     </section>
   </main>
 
@@ -99,6 +112,7 @@
      */
     const VIEWS = {
       tools:  { id: "view-tools",  label: "🧰 工具" },
+      hot:    { id: "view-hot",    label: "🔥 热点" },
       about:  { id: "view-about",  label: "ℹ️ 关于" },
       guide:  { id: "view-guide",  label: "📖 说明" },
     };
@@ -131,6 +145,8 @@
       Object.entries(VIEWS).forEach(([key, v]) => {
         document.getElementById(v.id).hidden = key !== view;
       });
+      // 热点视图懒加载：第一次切进去才请求（Day 21）
+      if (view === "hot" && !hotLoaded) loadHot();
     }
 
     function parseHash() {
@@ -221,6 +237,69 @@
     }
 
     document.getElementById("retryBtn").addEventListener("click", loadTools);
+
+    /* ===== Day 21 补齐：今日热点视图 =====
+     * 数据源：/api/hot（Day 17 建的真实微博热搜接口）
+     * 策略：懒加载 —— 第一次切到热点 tab 才请求，之后用缓存
+     */
+    let hotLoaded = false;
+
+    function fmtHotValue(v) {
+      if (typeof v !== "number") return "";
+      if (v >= 100000000) return (v / 100000000).toFixed(1).replace(/\.0$/, "") + "亿";
+      if (v >= 10000) return (v / 10000).toFixed(1).replace(/\.0$/, "") + "万";
+      return String(v);
+    }
+
+    function renderHot(items) {
+      const list = document.getElementById("hotList");
+      list.innerHTML = "";
+      for (const h of items) {
+        const a = document.createElement("a");
+        a.className = "hot-item" + (h.rank <= 3 ? " top" : "");
+        a.href = h.url || "#";
+        a.target = "_blank";
+        a.rel = "noopener";
+        const rank = document.createElement("span");
+        rank.className = "hot-rank";
+        rank.textContent = h.rank;
+        const title = document.createElement("span");
+        title.className = "hot-title";
+        title.textContent = h.title;
+        const val = document.createElement("span");
+        val.className = "hot-value";
+        val.textContent = fmtHotValue(h.hotValue);
+        a.append(rank, title, val);
+        list.appendChild(a);
+      }
+    }
+
+    async function loadHot() {
+      const list = document.getElementById("hotList");
+      const errBox = document.getElementById("hotError");
+      const errDetail = document.getElementById("hotErrorDetail");
+      const meta = document.getElementById("hotMeta");
+      errBox.hidden = true;
+      list.innerHTML = "<p class=\"state-hint\">热搜加载中…</p>";
+      try {
+        const { items, fetchedAt } = await fetchHot();
+        if (items.length === 0) {
+          list.innerHTML = "<p class=\"state-hint\">暂无热点数据</p>";
+        } else {
+          renderHot(items);
+          meta.textContent = fetchedAt
+            ? "数据更新于 " + new Date(fetchedAt).toLocaleString("zh-CN")
+            : "";
+          hotLoaded = true;
+        }
+      } catch (err) {
+        list.innerHTML = "";
+        errDetail.textContent = "错误信息：" + err.message;
+        errBox.hidden = false;
+      }
+    }
+
+    document.getElementById("hotRetryBtn").addEventListener("click", loadHot);
 
     /* 初始化：先建 tab，再按当前 hash 渲染视图，最后加载列表 */
     buildViewTabs();

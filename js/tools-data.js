@@ -39,3 +39,24 @@ async function fetchTools() {
   }));
   return { tools, updatedAt: json.updatedAt || null };
 }
+
+/* 从公网接口拉取今日热搜（Day 21 补齐：给 /api/hot 一个前端出口）
+ * 返回 { items: [{ rank, title, hotValue, url }], fetchedAt }
+ */
+async function fetchHot() {
+  const resp = await fetch(`${API_BASE}/api/hot?limit=20`);
+  if (!resp.ok) {
+    throw new Error(`接口返回 ${resp.status}`);
+  }
+  const json = await resp.json();
+  if (!json.ok || !Array.isArray(json.data)) {
+    throw new Error("接口返回格式异常");
+  }
+  const items = json.data.map((h, i) => ({
+    rank: i + 1,
+    title: h.title,
+    hotValue: h.hotValue,
+    url: h.url,
+  }));
+  return { items, fetchedAt: json.data[0] ? json.data[0].fetchedAt : null };
+}
