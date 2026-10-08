@@ -124,6 +124,57 @@ Content-Type: application/json
 
 > 防重复：`favorites.tool_id` 有唯一约束，重复提交由数据库层兜底拒绝。
 
+### 4.5 PATCH /api/favorites/:id —— 修改一条收藏（Day 22）
+
+**用途**：改一条收藏记录。支持改收藏的工具（`toolId`），或软删除/恢复（`isDeleted`）。
+
+**请求**：
+```
+PATCH /api/favorites/6
+Content-Type: application/json
+
+{ "toolId": 26 }        // 改成收藏另一个工具
+{ "isDeleted": true }   // 软删除（标记，GET 不再返回，可恢复）
+{ "isDeleted": false }  // 恢复软删除的记录
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `toolId` | number（正整数） | 否 | 改成收藏的工具 id（与 `isDeleted` 至少传一个） |
+| `isDeleted` | boolean | 否 | 软删除标记（`true` 软删 / `false` 恢复） |
+
+**成功响应（200）**：`{ "ok": true, "data": { "id": 6, "toolId": 26, "isDeleted": false } }`
+
+**错误响应（中文提示）**：
+
+| 场景 | 状态码 | 说明 |
+|---|---|---|
+| id 非正整数 | 400 | `收藏 id 不是正整数` |
+| 记录不存在 | 404 | `收藏记录不存在（id=999）` |
+| 两个字段都没传 | 400 | `PATCH 没有可更新的字段（toolId 或 isDeleted）` |
+| 改 toolId 目标已被收藏 | 409 | `该工具已在收藏列表中，请勿重复收藏` |
+
+### 4.6 DELETE /api/favorites/:id —— 删除一条收藏（Day 22）
+
+**用途**：硬删除（真删）一条收藏记录。
+
+**请求**（必须显式确认）：
+```
+DELETE /api/favorites/6?confirm=delete
+```
+
+**成功响应（200）**：`{ "ok": true, "data": { "id": 6, "deleted": true } }`
+
+**错误响应（中文提示）**：
+
+| 场景 | 状态码 | 说明 |
+|---|---|---|
+| 未带 `?confirm=delete` | 400 | `删除不可逆，请在请求后追加 ?confirm=delete 显式确认后再删` |
+| id 非正整数 | 400 | `收藏 id 不是正整数` |
+| 记录不存在 | 404 | `收藏记录不存在（id=999）` |
+
+> **删除为什么更容易出事（Day 22 一问）**：新增出错最多是「多一条垃圾数据」，删除出错是「真数据永远没了」。所以这里加了**双重保护**：① 请求必须显式带 `?confirm=delete` 二次确认；② 另有软删除（`is_deleted` 标记）作为更安全的替代——删错了改回 `false` 就找回。
+
 ### 4.4 GET /api/tools —— 已上线工具列表（Day 20）
 
 **用途**：首页展示数据库真实工具数据（`tools` 表 `is_active=true`）。
@@ -152,11 +203,12 @@ Content-Type: application/json
 
 > 前端落地页 url 由 `slug → TOOL_PAGES` 映射得出，接口不返回 url。
 
-## 5. 下一步（Day 19–20）
+## 5. 下一步（Day 19–22）
 
 - [x] 真实业务接口（Day 17 hot/favorites、Day 20 tools）
 - [x] 数据库建表（Day 16）
 - [x] 跨域细粒度配置（Day 20：网关统一处理，云函数不自带 CORS 头）
+- [x] 增删改查闭环（Day 22：PATCH/DELETE 上线，四类操作闭环）
 - [ ] 正式域名（去测试域名提示页）
 
 ## 6. 测试域名提示页说明

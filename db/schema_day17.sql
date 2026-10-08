@@ -45,7 +45,11 @@ CREATE TABLE IF NOT EXISTS favorites (
     tool_id    INTEGER NOT NULL REFERENCES tools(id) ON DELETE CASCADE,
 
     -- 收藏时间：带时区。
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    -- Day 22 追加：软删除标记。删除时不真删，只打标 true；查询跳过。
+    -- 删错了能找回（把标记改回 false 即恢复），这是「删除更容易出事」的兜底。
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- 高频查询：按工具查收藏、按时间排序，给外键建索引。

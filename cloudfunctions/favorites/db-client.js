@@ -42,6 +42,8 @@ async function gatewayFetch(path, options = {}) {
     err.statusCode = resp.status;
     throw err;
   }
+  // DELETE 成功返回 204 No Content（空 body），此时不能 resp.json()（会抛 Unexpected end of JSON input）
+  if (resp.status === 204) return null;
   return resp.json();
 }
 
@@ -74,9 +76,39 @@ async function insert(table, row) {
   });
 }
 
+/**
+ * 通用更新：PATCH 一张表，按 filter 更新匹配的行，返回更新后的行。
+ * @param {string} table 表名
+ * @param {object} patch 要更新的字段（部分更新）
+ * @param {string} filter PostgREST 查询字符串（如 id=eq.5）
+ */
+async function update(table, patch, filter) {
+  return gatewayFetch(`/v1/rdb/rest/${table}?${filter}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify(patch),
+  });
+}
+
+/**
+ * 通用删除：DELETE 一张表，按 filter 删除匹配的行。
+ * @param {string} table 表名
+ * @param {string} filter PostgREST 查询字符串（如 id=eq.5）
+ */
+async function remove(table, filter) {
+  await gatewayFetch(`/v1/rdb/rest/${table}?${filter}`, {
+    method: "DELETE",
+  });
+}
+
 module.exports = {
   GATEWAY,
   gatewayFetch,
   query,
   insert,
+  update,
+  remove,
 };
