@@ -22,6 +22,12 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
+// 简单请求日志（Day 23 余力加练）：时间、方法、路径、结果
+function logRequest(method, url, status) {
+  const time = new Date().toISOString();
+  console.log(`[req] ${time} ${method} ${url} -> ${status}`);
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -30,7 +36,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method !== "GET") {
-    sendJson(res, 404, { ok: false, message: "Not Found" });
+    sendJson(res, 404, { ok: false, message: "接口不存在，请检查请求路径" });
+    logRequest(req.method, req.url, 404);
     return;
   }
 
@@ -51,9 +58,12 @@ const server = http.createServer(async (req, res) => {
     }));
 
     sendJson(res, 200, { ok: true, data, updatedAt });
+    logRequest(req.method, req.url, 200);
   } catch (err) {
+    // 裸报错只写日志，不回给前端（不泄露内部英文技术细节）
     console.error("[tools] error:", err.message);
-    sendJson(res, 500, { ok: false, message: "数据库查询失败", error: err.message });
+    sendJson(res, 500, { ok: false, message: "服务器内部错误，请稍后重试" });
+    logRequest(req.method, req.url, 500);
   }
 });
 

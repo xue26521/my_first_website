@@ -30,6 +30,12 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
+// 简单请求日志（Day 23 余力加练）：时间、方法、路径、结果
+function logRequest(method, url, status) {
+  const time = new Date().toISOString();
+  console.log(`[req] ${time} ${method} ${url} -> ${status}`);
+}
+
 // 读取请求体（JSON）
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -240,7 +246,8 @@ const server = http.createServer(async (req, res) => {
       await handleDelete(res, id, query);
       return;
     }
-    sendJson(res, 404, { ok: false, message: "Not Found" });
+    sendJson(res, 404, { ok: false, message: "接口不存在，请检查请求路径" });
+    logRequest(req.method, req.url, 404);
   } catch (err) {
     console.error("[favorites] error:", err.message);
     // 唯一约束兜底：并发重复插入时 PostgREST 返回 409，这里转成友好中文提示
@@ -249,8 +256,11 @@ const server = http.createServer(async (req, res) => {
         ok: false,
         message: "该工具已在收藏列表中，请勿重复收藏",
       });
+      logRequest(req.method, req.url, 409);
     } else {
-      sendJson(res, 500, { ok: false, message: "服务器内部错误", error: err.message });
+      // 裸报错只写日志，不回给前端（不泄露内部英文技术细节）
+      sendJson(res, 500, { ok: false, message: "服务器内部错误，请稍后重试" });
+      logRequest(req.method, req.url, 500);
     }
   }
 });

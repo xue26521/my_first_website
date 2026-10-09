@@ -48,7 +48,7 @@ const server = http.createServer((req, res) => {
   }
 
   // 其他方法返回 404
-  sendJson(res, 404, { code: 404, message: "Not Found" });
+  sendJson(res, 404, { code: 404, message: "接口不存在，请检查请求路径" });
 });
 
 // 必须监听 9000 端口（平台硬性要求）
