@@ -115,8 +115,11 @@
       $("error").textContent = "";
       convert();
     });
-    [$("value"), $("fromUnit"), $("toUnit")].forEach(el =>
-      el.addEventListener("input", convert));
+    // Day 24 修复：数值框用 input（边输入边算）；两个单位下拉框必须用 change——
+    // <select> 切换选项只触发 change，不触发 input，之前监听 input 导致切单位不刷新结果。
+    $("value").addEventListener("input", convert);
+    $("fromUnit").addEventListener("change", convert);
+    $("toUnit").addEventListener("change", convert);
 
     fillUnits("length");
   </script>
